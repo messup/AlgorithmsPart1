@@ -12,6 +12,7 @@ class Percolation:
         self.openSites = 0
         self.size = np.zeros(N ** 2, int)
 
+    # Get 1D array index from row and column indexes
     def getLoc(self, row, column):
         return row * self.N + column
 
@@ -49,12 +50,21 @@ class Percolation:
     def numberOfOpenSites(self):
         return self.openSites
 
+    # Check all the sites on the top row and see if they are connected
+    # to the bottom row.
     def percolates(self):
         for j in np.arange(0, self.N, 1):
             for k in np.arange(self.N ** 2 - self.N, self.N ** 2, 1):
                 if self.connected(j, k):
                     return True
         return False
+
+    def plot(self):
+        plt.figure()
+        plt.imshow(self.returnGrid(), aspect='auto', cmap=plt.cm.gray,
+                   interpolation='nearest')
+        plt.axes().set_aspect('equal')
+        plt.show()
 
     def returnGrid(self):
         return np.reshape(self.openGrid, [self.N, self.N])
@@ -64,10 +74,10 @@ class Percolation:
             i = self.id[i]
         return i
 
+    # Weighted quick-union
     def union(self, p, q):
         i = self.root(p)
         j = self.root(q)
-        # self.id[i] = j
         if i == j:
             return
         if self.size[i] < self.size[j]:
@@ -76,8 +86,6 @@ class Percolation:
         else:
             self.id[j] = i
             self.size[i] += self.size[j]
-
-
 
     def connected(self, p, q):
         return self.root(p) == self.root(q)
@@ -101,18 +109,16 @@ class PercolationStats:
     def stddev(self):
         return np.stddev(self.siteCount)
 
-    def confidenceLo(self):
-        pass
-
-    def confidenceHi(self):
-        pass
-
 
 def sigmoid(x, x0, k):
     y = 1 / (1 + np.exp(-k * (x - x0)))
     return y
 
 
+# Plot the percolation probability vs site occupation probability
+# for a grid of size N, based on a number of random trials.
+# This is estimated by a sigmoid curve fit on the data,
+# but there are better ways of doing it...
 def ProbabilityPlot(N, trialCount):
     pstats = PercolationStats(N, trialCount)
 
@@ -129,21 +135,29 @@ def ProbabilityPlot(N, trialCount):
     ydata = cumulative
 
     popt, pcov = curve_fit(sigmoid, xdata, ydata)
-    # print popt
 
     x = np.linspace(0, 1, 150)
     y = sigmoid(x, *popt)
 
     plt.xlim(0, 1)
-    # pylab.plot(xdata, ydata, 'o', label='data')
     plt.plot(x, y, label='N = {}'.format(N))
     plt.ylim(0, 1.05)
     plt.axvline(mean, c='black', linestyle='dashed')
 
 
+plt.figure()
 ProbabilityPlot(10, 1000)
 ProbabilityPlot(20, 100)
 ProbabilityPlot(50, 10)
 plt.legend(loc='best')
 plt.savefig('outfile.png', dpi=270)
-# plt.show()
+plt.show()
+
+# N = 25
+# p = Percolation(N)
+# while p.percolates() is False:
+#     row = np.random.randint(0, N)
+#     col = np.random.randint(0, N)
+#     p.open(row, col)
+
+# p.plot()
