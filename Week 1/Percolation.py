@@ -3,51 +3,54 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
 
+# An N x N grid where all sites are either open or closed. The network of open
+# sites is recorded using a union-find algorithm. If there is network of open
+# sites from the top row to the bottom row, then the grid percolates.
 class Percolation:
 
     def __init__(self, N):
         self.N = N
-        self.openGrid = np.zeros(N ** 2, int)
+        self.open_grid = np.zeros(N ** 2, int)
         self.id = np.arange(0, N ** 2, 1)
         self.openSites = 0
         self.size = np.zeros(N ** 2, int)
 
     # Get 1D array index from row and column indexes
-    def getLoc(self, row, column):
+    def get_loc(self, row, column):
         return row * self.N + column
 
-    def isOpen(self, row, column):
-        return self.openGrid[self.getLoc(row, column)] == 1
+    def is_open(self, row, column):
+        return self.open_grid[self.get_loc(row, column)] == 1
 
-    def isFull(self, row, column):
-        return self.openGrid[self.getLoc(row, column)] == 0
+    def is_full(self, row, column):
+        return self.open_grid[self.get_loc(row, column)] == 0
 
     def open(self, row, column):
-        if self.isOpen(row, column):
+        if self.is_open(row, column):
             return 1
         else:
-            self.openGrid[row * self.N + column] = 1
+            self.open_grid[row * self.N + column] = 1
             self.openSites += 1
 
-            if row != 0 and self.isOpen(row - 1, column):
-                self.union(self.getLoc(row, column),
-                           self.getLoc(row - 1, column))
+            if row != 0 and self.is_open(row - 1, column):
+                self.union(self.get_loc(row, column),
+                           self.get_loc(row - 1, column))
 
-            if row != (self.N - 1) and self.isOpen(row + 1, column):
-                self.union(self.getLoc(row, column),
-                           self.getLoc(row + 1, column))
+            if row != (self.N - 1) and self.is_open(row + 1, column):
+                self.union(self.get_loc(row, column),
+                           self.get_loc(row + 1, column))
 
-            if column != 0 and self.isOpen(row, column - 1):
-                self.union(self.getLoc(row, column),
-                           self.getLoc(row, column - 1))
+            if column != 0 and self.is_open(row, column - 1):
+                self.union(self.get_loc(row, column),
+                           self.get_loc(row, column - 1))
 
-            if column != (self.N - 1) and self.isOpen(row, column + 1):
-                self.union(self.getLoc(row, column),
-                           self.getLoc(row, column + 1))
+            if column != (self.N - 1) and self.is_open(row, column + 1):
+                self.union(self.get_loc(row, column),
+                           self.get_loc(row, column + 1))
 
             return 0
 
-    def numberOfOpenSites(self):
+    def number_of_open_sites(self):
         return self.openSites
 
     # Check all the sites on the top row and see if they are connected
@@ -61,13 +64,13 @@ class Percolation:
 
     def plot(self):
         plt.figure()
-        plt.imshow(self.returnGrid(), aspect='auto', cmap=plt.cm.gray,
+        plt.imshow(self.return_grid(), aspect='auto', cmap=plt.cm.gray,
                    interpolation='nearest')
         plt.axes().set_aspect('equal')
         plt.show()
 
-    def returnGrid(self):
-        return np.reshape(self.openGrid, [self.N, self.N])
+    def return_grid(self):
+        return np.reshape(self.open_grid, [self.N, self.N])
 
     def root(self, i):
         while i != self.id[i]:
@@ -91,6 +94,8 @@ class Percolation:
         return self.root(p) == self.root(q)
 
 
+# Trial a number of Percolation objects of size N x N to determine the
+# number of open sites required to achieve percolation.
 class PercolationStats:
 
     def __init__(self, N, trialCount):
@@ -101,7 +106,7 @@ class PercolationStats:
                 row = np.random.randint(0, N)
                 col = np.random.randint(0, N)
                 p.open(row, col)
-            self.siteCount[i] = p.numberOfOpenSites()
+            self.siteCount[i] = p.number_of_open_sites()
 
     def mean(self):
         return np.mean(self.siteCount)
@@ -115,11 +120,9 @@ def sigmoid(x, x0, k):
     return y
 
 
-# Plot the percolation probability vs site occupation probability
-# for a grid of size N, based on a number of random trials.
-# This is estimated by a sigmoid curve fit on the data,
-# but there are better ways of doing it...
-def ProbabilityPlot(N, trialCount):
+# Plot the percolation probability vs site occupation probability.
+# This is approximated using a sigmoid curve fit on the data.
+def plot_probability(N, trialCount):
     pstats = PercolationStats(N, trialCount)
 
     counts = pstats.siteCount / N ** 2
@@ -146,9 +149,9 @@ def ProbabilityPlot(N, trialCount):
 
 
 plt.figure()
-ProbabilityPlot(10, 1000)
-ProbabilityPlot(20, 100)
-ProbabilityPlot(50, 10)
+plot_probability(10, 1000)
+plot_probability(20, 100)
+plot_probability(50, 10)
 plt.legend(loc='best')
 plt.savefig('outfile.png', dpi=270)
 plt.show()
